@@ -1,23 +1,38 @@
 from setuptools import setup, find_packages
 from Cython.Distutils import build_ext, Extension
-import subprocess
+import subprocess as sp
 import os
 import os.path
 import sys
 import numpy
 import glob
 
-def detect_pylon(config_config='/opt/pylon5/bin/pylon-config'):
-    compiler_config = dict()
-    compiler_config['library_dirs'] = [subprocess.check_output([config_config, '--libdir']).decode().strip(), ]
-    compiler_config['include_dirs'] = [_.strip() for _ in
-                                       subprocess.check_output([config_config,
-                                                                '--cflags-only-I']).decode().strip().split('-I') if _]
-    compiler_config['libraries'] = [_.strip() for _ in
-                                       subprocess.check_output([config_config,
-                                                                '--libs-only-l']).decode().strip().split('-l') if _]
-    compiler_config['runtime_library_dirs'] = compiler_config['library_dirs']
-    return compiler_config
+def pylon_config(*args, **kwargs):
+    """ Invoke pylon-config and get the result
+    """
+    path = kwargs.get("path", '/opt/pylon5/bin/pylon-config')
+    splitby = kwargs.get("splitby", None)
+
+    cmd = [path]
+    cmd.extend(args)
+    output = sp.check_output(cmd).decode()
+    if ( splitby is not None ):
+        comps = output.split(splitby)
+        ret = [x.strip() for x in comps ]
+        ret = [x for x in ret if len(x) > 0]
+    else:
+        ret = [output.strip()]
+    return(ret)
+
+def detect_pylon():
+    cconfig = dict()
+    cconfig['library_dirs'] = pylon_config("--libdir")
+    cconfig['include_dirs'] = pylon_config("--cflags-only-I", splitby="-I")
+    cconfig['libraries'] = pylon_config("--libs-only-l", splitby="-l")
+    cconfig['runtime_library_dirs'] = cconfig['library_dirs']
+    cconfig["extra_link_args"] = pylon_config("--libs-rpath", splitby=" ")
+    print("Compiler Config: {}".format(cconfig))
+    return cconfig
 
 def is_windows_64bit():
     if 'PROCESSOR_ARCHITEW6432' in os.environ:
