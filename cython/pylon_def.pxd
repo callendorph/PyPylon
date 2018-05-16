@@ -134,6 +134,19 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         IImage& operator()
         #CGrabResultData* operator->()
 
+    ctypedef enum ETimeoutHandling:
+        TimeoutHandling_Return,
+        TimeoutHandling_ThrowException
+
+    ctypedef enum EGrabStrategy:
+        GrabStrategy_OneByOne,
+        GrabStrategy_LatestImageOnly,
+        GrabStrategy_LatestImages,
+        GrabStrategy_UpcomingImage
+
+    ctypedef enum EGrabLoop:
+        GrabLoop_ProvidedByInstantCamera,
+        GrabLoop_ProvidedByUser
 
     cdef cppclass IPylonDevice:
         pass
@@ -150,16 +163,47 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
     cdef cppclass CInstantCamera:
         CInstantCamera()
         void Attach(IPylonDevice*)
+        bool IsPylonDeviceAttached()
         CDeviceInfo& GetDeviceInfo() except +
         void IsCameraDeviceRemoved()
         void Open() except +
         void Close() except +
         bool IsOpen() except +
         IPylonDevice* DetachDevice() except +
-        void StartGrabbing(size_t maxImages) except +    #FIXME: implement different strategies
+
+        void StartGrabbing() except +
+        void StartGrabbing(EGrabStrategy) except +
+        void StartGrabbing(EGrabStrategy, EGrabLoop) except +
+        void StartGrabbing(size_t maxImages) except +
+        void StartGrabbing(size_t maxImages, EGrabStrategy) except +
+        void StartGrabbing(size_t maxImages, EGrabStrategy, EGrabLoop) except +
+        void StopGrabbing() except +
         bool IsGrabbing()
-        # RetrieveResult() is blocking call into C++ native SDK, allow it to be called without GIL
-        bool RetrieveResult(unsigned int timeout_ms, CGrabResultPtr& grab_result) nogil except + # FIXME: Timout handling
+
+        bool RetrieveResult(
+            unsigned int timeout_ms,
+            CGrabResultPtr& grab_result
+        ) nogil except +
+        bool RetrieveResult(
+            unsigned int timeout_ms,
+            CGrabResultPtr& grab_result,
+            ETimeoutHandling
+        ) nogil except +
+
+        bool GrabOne(
+            unsigned int timeout_ms,
+            CGrabResultPtr& grab_result
+        ) nogil except +
+        bool GrabOne(
+            unsigned int timeout_ms,
+            CGrabResultPtr& grab_result,
+            ETimeoutHandling
+        ) nogil except +
+
+        void ExecuteSoftwareTrigger()
+        size_t GetQueuedBufferCount()
+
+
         INodeMap& GetNodeMap()
 
     cdef cppclass DeviceInfoList_t:
