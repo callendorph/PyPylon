@@ -5,6 +5,10 @@ from libcpp.string cimport string
 cdef extern from "Base/GCBase.h":
     cdef cppclass gcstring:
         gcstring(char*)
+    cdef cppclass gcstring_vector:
+        gcstring_vector()
+        gcstring at(size_t index) except +
+        uint64_t size()
 
 cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
 
@@ -38,6 +42,20 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
         double GetMin()
         double GetMax()
 
+    cdef cppclass IEnumeration:
+        int64_t GetIntValue(bool verify=True) except +
+        void SetIntValue(int64_t, bool verfy=True) except +
+        gcstring ToString()
+        void FromString(gcstring, bool verify=True) except +
+        void GetSymbolics(gcstring_vector) except +
+
+    cdef cppclass IEnumEntry:
+        int64_t GetValue()
+        gcstring GetSymbolic()
+        gcstring ToString()
+        FromString(gcstring, bool verify=True) except +
+
+
     cdef cppclass NodeList_t:
         cppclass iterator:
             INode* operator*()
@@ -65,6 +83,9 @@ cdef extern from *:
     INodeMap* dynamic_cast_inodemap_ptr "dynamic_cast<GenApi::INodeMap*>" (INode*) except +
     INodeMap* dynamic_cast_inodemap_ptr "dynamic_cast<GenApi::INodeMap*>" (INode*) except +
     ICategory* dynamic_cast_icategory_ptr "dynamic_cast<GenApi::ICategory*>" (INode*) except +
+    IEnumeration* dynamic_cast_ienumeration_ptr "dynamic_cast<GenApi::IEnumeration*>" (INode*) except +
+
+    IEnumEntry* dynamic_cast_ienumentry_ptr "dynamic_cast<GenApi::IEnumEntry*>" (INode*) except +
 
     bool node_is_readable "GenApi::IsReadable" (INode*) except +
     bool node_is_writable "GenApi::IsWritable" (INode*) except +

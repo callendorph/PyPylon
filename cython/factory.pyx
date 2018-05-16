@@ -5,7 +5,38 @@ from libcpp.string cimport string
 cimport numpy as np
 import numpy as np
 
+from enum import Enum
+
 from pylon_def cimport *
+
+cdef gcstring_vector_to_list(gcstring_vector strVec):
+    """ Convert a vector of gcstrings into a python list of str objects
+    so that they are easier to work with.
+    """
+    cnt = strVec.size()
+    ret = []
+    for i in range(0,cnt):
+        s = (<string>strVec.at(i)).decode("ascii")
+        ret.append(s)
+    return(ret)
+
+# Local map for enumerated types that
+#   are built from data that comes from the
+#   camera.
+enumdefs = {}
+
+cdef build_enum(basestring key, IEnumeration* enum_val):
+    """ Given the key value for a parameter on a camera and
+    a known enumerated parameter object, extract out the enumerated
+    types available values.
+    """
+    cdef gcstring_vector symbols
+    enum_val.GetSymbolics(symbols)
+    symbStrs = gcstring_vector_to_list(symbols)
+    kv = zip(symbStrs, symbStrs)
+    enumType = Enum(key + "Enum", kv)
+    enumdefs[key] = enumType
+    return(enumType)
 
 
 cdef class DeviceInfo:
@@ -78,7 +109,6 @@ cdef class _PropertyMap:
 
         return (<string>(node.GetDisplayName())).decode()
 
-
     def __getitem__(self, basestring key):
         cdef bytes btes_name = key.encode()
         cdef INode* node = self.map.GetNode(gcstring(btes_name))
@@ -103,7 +133,10 @@ cdef class _PropertyMap:
         if float_value != NULL:
             return float_value.GetValue()
 
-        # TODO: Probably we also need some type of enum to be useful
+        cdef IEnumeration* enum_val = dynamic_cast_ienumeration_ptr(node)
+        if enum_val != NULL:
+            enumVal = (<string>(enum_val.ToString())).decode("ascii")
+            return(enumVal)
 
         # Potentially, we can always get the setting by string
         cdef IValue* string_value = dynamic_cast_ivalue_ptr(node)
@@ -145,7 +178,14 @@ cdef class _PropertyMap:
             float_value.SetValue(value)
             return
 
-        # TODO: Probably we also need some type of enum to be useful
+        # @note - We access the enumerated types by string to make it
+        #   easier to access from python
+        cdef IEnumeration* enum_val = dynamic_cast_ienumeration_ptr(node)
+        cdef bytes bvalue
+        if enum_val != NULL:
+            bvalue = str(value).encode()
+            enum_val.FromString(gcstring(bvalue))
+            return
 
         # Potentially, we can always set the setting by string
         cdef IValue* string_value = dynamic_cast_ivalue_ptr(node)
@@ -170,6 +210,43 @@ cdef class _PropertyMap:
             inc(it)
 
         return node_keys
+
+    def find_enumerated_types(self):
+        # Go through the keys and determine which
+        #   values are from enumerated types
+        for k in self.keys():
+            try:
+                enumType = self._extract_enum(k)
+            except Exception as exc:
+                pass
+        return(enumdefs)
+
+    def get_enum_by_key(self, key):
+        return(self._extract_enum(key))
+
+    def _extract_enum(self, key):
+        try:
+            enumType = enumdefs[key]
+            return(enumType)
+        except KeyError:
+            pass
+
+        cdef bytes key_name = key.encode()
+        cdef INode* node = self.map.GetNode(gcstring(key_name))
+
+        if node == NULL:
+            raise KeyError('Key does not exist')
+
+        if not node_is_readable(node):
+            raise IOError('Key is not readable')
+
+        cdef IEnumeration* enum_val = dynamic_cast_ienumeration_ptr(node)
+        if ( enum_val == NULL ):
+            raise ValueError("Not an Enum Type")
+
+        enumType = build_enum(key, enum_val)
+
+        return(enumType)
 
 
 cdef class Camera:
