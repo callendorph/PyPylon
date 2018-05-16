@@ -100,7 +100,20 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
     void PylonInitialize() except +
     void PylonTerminate() except +
 
-    # cdef enum EPixelType:
+    ctypedef enum EPixelType:
+    # @ note - this is not a complete listing - just
+    #    available types in the emulator for now.
+        PixelType_Undefined,
+        PixelType_Mono8,
+        PixelType_Mono16,
+        PixelType_RGB8packed,
+        PixelType_BGR8packed,
+        PixelType_BGRA8packed,
+        PixelType_RGB16packed
+
+    ctypedef enum EImageOrientation:
+        ImageOrientation_TopDown,
+        ImageOrientation_BottomUp
 
     cdef cppclass IImage:
         uint32_t GetWidth()
@@ -109,6 +122,10 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         size_t GetImageSize()
         void* GetBuffer()
         bool IsValid()
+        EImageOrientation GetOrientation()
+        EPixelType GetPixelType()
+        bool GetStride( size_t& strideBytes )
+        bool IsUnique()
 
     cdef cppclass CGrabResultData:
         bool GrabSucceeded()
