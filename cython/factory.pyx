@@ -383,6 +383,18 @@ cdef class Camera:
         def __get__(self):
             return _PropertyMap.create(&self.camera.GetNodeMap())
 
+    def is_usb(self):
+        return(self.camera.IsUsb())
+
+    def is_gige(self):
+        return(self.camera.IsGigE())
+
+    def is_cameralink(self):
+        return(self.camera.IsCameraLink())
+
+    def is_bcon(self):
+        return(self.camera.IsBcon())
+
 
 cdef class Factory:
     def __cinit__(self):

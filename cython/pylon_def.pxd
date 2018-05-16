@@ -203,6 +203,10 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         void ExecuteSoftwareTrigger()
         size_t GetQueuedBufferCount()
 
+        bool IsUsb()
+        bool IsGigE()
+        bool IsCameraLink()
+        bool IsBcon()
 
         INodeMap& GetNodeMap()
 
