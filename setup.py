@@ -99,7 +99,7 @@ pypylon_extensions = [
         'pypylon.cython.version', ['cython/version.pyx', ], **build_options
     ),
     Extension(
-        'pypylon.cython.factory', ['cython/factory.pyx' ], **build_options
+        'pypylon.cython.factory', ['cython/factory.pyx', 'cython/hacks.cpp' ], **build_options
     ),
 ]
 

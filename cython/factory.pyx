@@ -6,6 +6,7 @@ cimport numpy as np
 import numpy as np
 import logging
 
+from collections import namedtuple
 from enum import Enum
 
 from pylon_def cimport *
@@ -249,7 +250,14 @@ cdef class _PropertyMap:
 
         return(enumType)
 
-
+# Image Meta Data Tuple
+#   This contains information about the image that is
+# returned.
+#  ts = TimeStamp - device specific tick counter - emulator reports 0
+#  id = block id
+#  num = frame number in a sequeunce. gets reset on StartGrabbing
+#  skipped = number of images skipped since last capture - (Latest cap mode)
+ImageMetaData = namedtuple("ImageMetaData", ["ts", "id", "num", "skipped"])
 
 ######################
 # Lookup table for different pixel types
@@ -307,6 +315,7 @@ cdef class Camera:
         self.camera.StartGrabbing(nr_images)
         logging.debug("Starting Grab")
         cdef CGrabResultPtr ptr_grab_result
+        cdef CGrabResultData *result
         cdef IImage* img
 
         cdef ETimeoutHandling errHandling
@@ -335,10 +344,26 @@ cdef class Camera:
 
                 raise RuntimeError("CInstantCamera:RetrieveResult Failure")
 
-            if not ACCESS_CGrabResultPtr_GrabSucceeded(ptr_grab_result):
-                error_desc = (<string>(ACCESS_CGrabResultPtr_GetErrorDescription(ptr_grab_result))).decode()
-                logging.error("{}: ret=True: Grab Failed: {}".format( funcArgs, error_desc))
-                raise RuntimeError(error_desc)
+            result = new CGrabResultData(ptr_grab_result)
+            try:
+                if not result.GrabSucceeded() :
+                    error_desc = (<string>(result.GetErrorDescription())).decode()
+                    code = result.GetErrorCode()
+                    logging.error(
+                        "{}: ret=True: Grab Failed: {} code={}".format(
+                            funcArgs, error_desc, code
+                        ))
+                    raise RuntimeError(error_desc)
+
+                ts = result.GetTimeStamp()
+                blockId = result.GetBlockID()
+                imgNum = result.GetImageNumber()
+                skipped = result.GetNumberOfSkippedImages()
+                meta = ImageMetaData(
+                    ts, blockId, imgNum, skipped
+                )
+            finally:
+                del result
 
             logging.debug("Grab Success")
             img = &(<IImage&>ptr_grab_result)
@@ -374,7 +399,7 @@ cdef class Camera:
                 logging.debug("Flipping image vertically")
                 frame = np.flipup(frame)
 
-            yield frame
+            yield frame, meta
 
     def grab_image(self, unsigned int timeout=5000):
         return next(self.grab_images(1, timeout))

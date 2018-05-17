@@ -147,13 +147,17 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         bool GetStride( size_t& strideBytes )
         bool IsUnique()
 
-    cdef cppclass CGrabResultData:
-        bool GrabSucceeded()
+    ctypedef enum EPayloadType:
+        PayloadType_Undefined,
+        PayloadType_Image,
+        PayloadType_RawData,
+        PayloadType_File,
+        PayloadType_ChunkData,
+        PayloadType_DeviceSpecific
 
     cdef cppclass CGrabResultPtr:
         IImage& operator()
         bool IsValid()
-        #CGrabResultData* operator->()
 
     ctypedef enum ETimeoutHandling:
         TimeoutHandling_Return,
@@ -270,8 +274,44 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
 cdef extern from "pylon/PylonIncludes.h"  namespace 'Pylon::CTlFactory':
     CTlFactory& GetInstance()
 
-# EVIL HACK: We cannot dereference officially with the -> operator. So we use ugly macros...
+# The pylon library uses CGrabResultPtr as a means of protecting the
+#   pointer of the GrabResultData object. This object has most of its
+#   constructors and other operators set to private so we can create those
+#   objects. This problematic for us because Cython can't use the '->'
+#   operator override.
+# However, fear not, the below code is a wrapper around the CGrabResultPtr
+#   in C++ to access a 'CGrabResultData' object. This object is not exactly
+#   the same as a Pylon::CGrabResultData but it will work as a stand-in in
+#   the Cython code.
 cdef extern from 'hacks.h':
-    bool ACCESS_CGrabResultPtr_GrabSucceeded(CGrabResultPtr ptr)
-    String_t ACCESS_CGrabResultPtr_GetErrorDescription(CGrabResultPtr ptr)
-    uint32_t ACCESS_CGrabResultPtr_GetErrorCode(CGrabResultPtr ptr)
+    cdef cppclass CGrabResultData:
+        CGrabResultData(CGrabResultPtr& ptr)
+        bool GrabSucceeded()
+        String_t GetErrorDescription()
+        uint32_t GetErrorCode()
+        EPayloadType GetPayloadType()
+        EPixelType GetPixelType()
+        uint32_t GetWidth()
+        uint32_t GetHeight()
+        uint32_t GetOffsetX()
+        uint32_t GetOffsetY()
+        uint32_t GetPaddingX()
+        uint32_t GetPaddingY()
+        bool GetStride(size_t& strideBytes)
+        size_t GetImageSize()
+
+        void* GetBuffer()
+        size_t GetPayloadSize()
+
+        uint32_t GetFrameNumber() # Deprecated
+        uint64_t GetBlockID()
+        uint64_t GetTimeStamp()
+        int64_t GetID()
+        int64_t GetImageNumber()
+        int64_t GetNumberOfSkippedImages()
+
+        bool IsChunkDataAvailable()
+        INodeMap& GetChunkDataNodeMap()
+
+        bool HasCRC()
+        bool CheckCRC()
