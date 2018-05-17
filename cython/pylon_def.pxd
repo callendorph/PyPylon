@@ -2,12 +2,15 @@ from libcpp cimport bool
 from libc.stdint cimport uint32_t, uint64_t, int64_t
 from libcpp.string cimport string
 
+cdef extern from "pylon_exc.h":
+    cdef void raise_py_error()
+
 cdef extern from "Base/GCBase.h":
     cdef cppclass gcstring:
         gcstring(char*)
     cdef cppclass gcstring_vector:
         gcstring_vector()
-        gcstring at(size_t index) except +
+        gcstring at(size_t index) except +raise_py_error
         uint64_t size()
 
 cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
@@ -21,13 +24,13 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
         _UdefinedAccesMode,
         _CycleDetectAccesMode
 
-    bool IsReadable(EAccessMode) except +
-    bool IsWritable(EAccessMode) except +
-    bool IsImplemented(EAccessMode) except +
+    bool IsReadable(EAccessMode) except +raise_py_error
+    bool IsWritable(EAccessMode) except +raise_py_error
+    bool IsImplemented(EAccessMode) except +raise_py_error
 
-    bool IsReadable(INode *) except +
-    bool IsWritable(INode *) except +
-    bool IsImplemented(INode *) except +
+    bool IsReadable(INode *) except +raise_py_error
+    bool IsWritable(INode *) except +raise_py_error
+    bool IsImplemented(INode *) except +raise_py_error
 
     cdef cppclass INode:
         gcstring GetName(bool FullQualified=False)
@@ -42,17 +45,17 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
     # Types an INode could be
     cdef cppclass IValue:
         gcstring ToString()
-        void FromString(gcstring, bool verify=True) except +
+        void FromString(gcstring, bool verify=True) except +raise_py_error
         EAccessMode GetAccessMode()
 
     cdef cppclass IBoolean:
         bool GetValue()
-        void SetValue(bool) except +
+        void SetValue(bool) except +raise_py_error
         EAccessMode GetAccessMode()
 
     cdef cppclass IInteger:
         int64_t GetValue()
-        void SetValue(int64_t) except +
+        void SetValue(int64_t) except +raise_py_error
         int64_t GetMin()
         int64_t GetMax()
         EAccessMode GetAccessMode()
@@ -60,24 +63,24 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
     cdef cppclass IString
     cdef cppclass IFloat:
         double GetValue()
-        void SetValue(double) except +
+        void SetValue(double) except +raise_py_error
         double GetMin()
         double GetMax()
         EAccessMode GetAccessMode()
 
     cdef cppclass IEnumeration:
-        int64_t GetIntValue(bool verify=True) except +
-        void SetIntValue(int64_t, bool verfy=True) except +
+        int64_t GetIntValue(bool verify=True) except +raise_py_error
+        void SetIntValue(int64_t, bool verfy=True) except +raise_py_error
         gcstring ToString()
-        void FromString(gcstring, bool verify=True) except +
-        void GetSymbolics(gcstring_vector) except +
+        void FromString(gcstring, bool verify=True) except +raise_py_error
+        void GetSymbolics(gcstring_vector) except +raise_py_error
         EAccessMode GetAccessMode()
 
     cdef cppclass IEnumEntry:
         int64_t GetValue()
         gcstring GetSymbolic()
         gcstring ToString()
-        FromString(gcstring, bool verify=True) except +
+        FromString(gcstring, bool verify=True) except +raise_py_error
 
 
     cdef cppclass NodeList_t:
@@ -117,8 +120,8 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
     cdef cppclass StringList_t
 
     # Top level init functions
-    void PylonInitialize() except +
-    void PylonTerminate() except +
+    void PylonInitialize() except +raise_py_error
+    void PylonTerminate() except +raise_py_error
 
     ctypedef enum EPixelType:
     # @ note - this is not a complete listing - just
@@ -177,53 +180,53 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         pass
 
     cdef cppclass CDeviceInfo:
-        String_t GetSerialNumber() except +
-        String_t GetUserDefinedName() except +
-        String_t GetModelName() except +
-        String_t GetDeviceVersion() except +
-        String_t GetFriendlyName() except +
-        String_t GetVendorName() except +
-        String_t GetDeviceClass() except +
+        String_t GetSerialNumber() except +raise_py_error
+        String_t GetUserDefinedName() except +raise_py_error
+        String_t GetModelName() except +raise_py_error
+        String_t GetDeviceVersion() except +raise_py_error
+        String_t GetFriendlyName() except +raise_py_error
+        String_t GetVendorName() except +raise_py_error
+        String_t GetDeviceClass() except +raise_py_error
 
     cdef cppclass CInstantCamera:
         CInstantCamera()
         void Attach(IPylonDevice*)
         bool IsPylonDeviceAttached()
-        CDeviceInfo& GetDeviceInfo() except +
+        CDeviceInfo& GetDeviceInfo() except +raise_py_error
         void IsCameraDeviceRemoved()
-        void Open() except +
-        void Close() except +
-        bool IsOpen() except +
-        IPylonDevice* DetachDevice() except +
+        void Open() except +raise_py_error
+        void Close() except +raise_py_error
+        bool IsOpen() except +raise_py_error
+        IPylonDevice* DetachDevice() except +raise_py_error
 
-        void StartGrabbing() except +
-        void StartGrabbing(EGrabStrategy) except +
-        void StartGrabbing(EGrabStrategy, EGrabLoop) except +
-        void StartGrabbing(size_t maxImages) except +
-        void StartGrabbing(size_t maxImages, EGrabStrategy) except +
-        void StartGrabbing(size_t maxImages, EGrabStrategy, EGrabLoop) except +
-        void StopGrabbing() except +
+        void StartGrabbing() except +raise_py_error
+        void StartGrabbing(EGrabStrategy) except +raise_py_error
+        void StartGrabbing(EGrabStrategy, EGrabLoop) except +raise_py_error
+        void StartGrabbing(size_t maxImages) except +raise_py_error
+        void StartGrabbing(size_t maxImages, EGrabStrategy) except +raise_py_error
+        void StartGrabbing(size_t maxImages, EGrabStrategy, EGrabLoop) except +raise_py_error
+        void StopGrabbing() except +raise_py_error
         bool IsGrabbing()
 
         bool RetrieveResult(
             unsigned int timeout_ms,
             CGrabResultPtr& grab_result
-        ) nogil except +
+        ) nogil except +raise_py_error
         bool RetrieveResult(
             unsigned int timeout_ms,
             CGrabResultPtr& grab_result,
             ETimeoutHandling
-        ) nogil except +
+        ) nogil except +raise_py_error
 
         bool GrabOne(
             unsigned int timeout_ms,
             CGrabResultPtr& grab_result
-        ) nogil except +
+        ) nogil except +raise_py_error
         bool GrabOne(
             unsigned int timeout_ms,
             CGrabResultPtr& grab_result,
             ETimeoutHandling
-        ) nogil except +
+        ) nogil except +raise_py_error
 
         void ExecuteSoftwareTrigger()
         size_t GetQueuedBufferCount()
