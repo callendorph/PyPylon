@@ -1,4 +1,4 @@
-from pypylon.cython.factory import Factory
+from pypylon.cython.factory import Factory, GrabStrategy, GrabLoop
 from pypylon.cython.version import PylonVersion
 
 factory = Factory()
