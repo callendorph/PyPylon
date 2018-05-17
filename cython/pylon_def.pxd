@@ -12,6 +12,23 @@ cdef extern from "Base/GCBase.h":
 
 cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
 
+    ctypedef enum EAccessMode:
+        NI,
+        NA,
+        WO,
+        RO,
+        RW,
+        _UdefinedAccesMode,
+        _CycleDetectAccesMode
+
+    bool IsReadable(EAccessMode) except +
+    bool IsWritable(EAccessMode) except +
+    bool IsImplemented(EAccessMode) except +
+
+    bool IsReadable(INode *) except +
+    bool IsWritable(INode *) except +
+    bool IsImplemented(INode *) except +
+
     cdef cppclass INode:
         gcstring GetName(bool FullQualified=False)
         gcstring GetNameSpace()
@@ -19,21 +36,26 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
         gcstring GetDisplayName()
         bool IsFeature()
         gcstring GetValue()
+        EAccessMode GetAccessMode()
+        bool IsDeprecated()
 
     # Types an INode could be
     cdef cppclass IValue:
         gcstring ToString()
         void FromString(gcstring, bool verify=True) except +
+        EAccessMode GetAccessMode()
 
     cdef cppclass IBoolean:
         bool GetValue()
         void SetValue(bool) except +
+        EAccessMode GetAccessMode()
 
     cdef cppclass IInteger:
         int64_t GetValue()
         void SetValue(int64_t) except +
         int64_t GetMin()
         int64_t GetMax()
+        EAccessMode GetAccessMode()
 
     cdef cppclass IString
     cdef cppclass IFloat:
@@ -41,6 +63,7 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
         void SetValue(double) except +
         double GetMin()
         double GetMax()
+        EAccessMode GetAccessMode()
 
     cdef cppclass IEnumeration:
         int64_t GetIntValue(bool verify=True) except +
@@ -48,6 +71,7 @@ cdef extern from "GenApi/GenApi.h" namespace 'GenApi':
         gcstring ToString()
         void FromString(gcstring, bool verify=True) except +
         void GetSymbolics(gcstring_vector) except +
+        EAccessMode GetAccessMode()
 
     cdef cppclass IEnumEntry:
         int64_t GetValue()
@@ -86,10 +110,6 @@ cdef extern from *:
     IEnumeration* dynamic_cast_ienumeration_ptr "dynamic_cast<GenApi::IEnumeration*>" (INode*) except +
 
     IEnumEntry* dynamic_cast_ienumentry_ptr "dynamic_cast<GenApi::IEnumEntry*>" (INode*) except +
-
-    bool node_is_readable "GenApi::IsReadable" (INode*) except +
-    bool node_is_writable "GenApi::IsWritable" (INode*) except +
-    bool node_is_implemented "GenApi::IsImplemented" (INode*) except +
 
 cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
     # Common special data types

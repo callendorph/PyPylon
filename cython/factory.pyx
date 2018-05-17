@@ -117,7 +117,7 @@ cdef class _PropertyMap:
         if node == NULL:
             raise KeyError('Key does not exist')
 
-        if not node_is_readable(node):
+        if not IsReadable(node):
             raise IOError('Key is not readable')
 
         # We need to try different types and check if the dynamic_cast succeeds... UGLY!
@@ -153,7 +153,7 @@ cdef class _PropertyMap:
         if node == NULL:
             raise KeyError('Key does not exist')
 
-        if not node_is_writable(node):
+        if not IsWritable(node):
             raise IOError('Key is not writable')
 
         # We need to try different types and check if the dynamic_cast succeeds... UGLY!
@@ -238,7 +238,7 @@ cdef class _PropertyMap:
         if node == NULL:
             raise KeyError('Key does not exist')
 
-        if not node_is_readable(node):
+        if not IsReadable(node):
             raise IOError('Key is not readable')
 
         cdef IEnumeration* enum_val = dynamic_cast_ienumeration_ptr(node)
