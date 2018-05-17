@@ -1,3 +1,6 @@
+# Build files in inplace mode
+cython/*.cpp 
+
 .idea/
 
 # Byte-compiled / optimized / DLL files
@@ -25,6 +28,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+cython_debug/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
