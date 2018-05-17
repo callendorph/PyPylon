@@ -107,7 +107,7 @@ setup(
     name='pypylon',
     license="custom",
     description="Cython module to provide access to Pylon's SDK.",
-    version='0.0.2',
+    version='0.0.3',
     author="Matthias Blaicher",
     author_email="matthias@blaicher.com",
     cmdclass={'build_ext': build_ext},
