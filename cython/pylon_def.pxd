@@ -152,6 +152,7 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
 
     cdef cppclass CGrabResultPtr:
         IImage& operator()
+        bool IsValid()
         #CGrabResultData* operator->()
 
     ctypedef enum ETimeoutHandling:
