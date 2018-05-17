@@ -1,5 +1,6 @@
 # Build files in inplace mode
-cython/*.cpp 
+cython/factory.cpp
+cython/version.cpp
 
 .idea/
 
