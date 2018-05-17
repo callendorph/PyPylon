@@ -230,6 +230,25 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
 
         INodeMap& GetNodeMap()
 
+        # Data Members
+        IInteger MaxNumBuffer
+        IInteger MaxNumQueuedBuffer
+        IInteger MaxNumGrabResults
+        IBoolean ChunkNodeMapsEnable
+        IInteger StaticChunkNodeMapPoolSize
+        IBoolean GrabCameraEvents
+        IBoolean MonitorModeActive
+        IInteger NumQueuedBuffers
+        IInteger NumReadyBuffers
+        IInteger NumEmptyBuffers
+        IInteger OutputQueueSize
+        IBoolean InternalGrabEngineThreadPriorityOverride
+        IInteger InternalGrabEngineThreadPriority
+        IBoolean GrabLoopThreadUseTimeout
+        IInteger GrabLoopThreadTimeout
+        IBoolean GrabLoopThreadPriorityOverride
+        IInteger GrabLoopThreadPriority
+
     cdef cppclass DeviceInfoList_t:
         cppclass iterator:
             CDeviceInfo operator*()

@@ -395,6 +395,103 @@ cdef class Camera:
     def is_bcon(self):
         return(self.camera.IsBcon())
 
+    ####################
+    # Data Members
+    ####################
+    property MaxNumBuffer:
+        def __get__(self):
+            return( self.camera.MaxNumBuffer.GetValue() )
+        def __set__(self, val):
+            self.camera.MaxNumBuffer.SetValue(val)
+
+    property MaxNumQueuedBuffer:
+        def __get__(self):
+            return( self.camera.MaxNumQueuedBuffer.GetValue() )
+        def __set__(self, val):
+            self.camera.MaxNumQueuedBuffer.SetValue(val)
+
+    property MaxNumGrabResults:
+        def __get__(self):
+            return( self.camera.MaxNumGrabResults.GetValue() )
+        def __set__(self, val):
+            self.camera.MaxNumGrabResults.SetValue(val)
+
+    property ChunkNodeMapsEnable:
+        def __get__(self):
+            return( self.camera.ChunkNodeMapsEnable.GetValue() )
+        def __set__(self, val):
+            self.camera.ChunkNodeMapsEnable.SetValue(val)
+
+    property StaticChunkNodeMapPoolSize:
+        def __get__(self):
+            return( self.camera.StaticChunkNodeMapPoolSize.GetValue() )
+        def __set__(self, val):
+            self.camera.StaticChunkNodeMapPoolSize.SetValue(val)
+
+    property GrabCameraEvents:
+        def __get__(self):
+            return( self.camera.GrabCameraEvents.GetValue() )
+        def __set__(self, val):
+            self.camera.GrabCameraEvents.SetValue(val)
+
+    property MonitorModeActive:
+        def __get__(self):
+            return( self.camera.MonitorModeActive.GetValue() )
+        def __set__(self, val):
+            self.camera.MonitorModeActive.SetValue(val)
+
+    property NumQueuedBuffers:
+        def __get__(self):
+            return( self.camera.NumQueuedBuffers.GetValue() )
+
+    property NumReadyBuffers:
+        def __get__(self):
+            return( self.camera.NumReadyBuffers.GetValue() )
+
+    property NumEmptyBuffers:
+        def __get__(self):
+            return( self.camera.NumEmptyBuffers.GetValue() )
+
+    property OutputQueueSize:
+        def __get__(self):
+            return( self.camera.OutputQueueSize.GetValue() )
+        def __set__(self, val):
+            self.camera.OutputQueueSize.SetValue(val)
+
+    property InternalGrabEngineThreadPriorityOverride:
+        def __get__(self):
+            return( self.camera.InternalGrabEngineThreadPriorityOverride.GetValue() )
+        def __set__(self, val):
+            self.camera.InternalGrabEngineThreadPriorityOverride.SetValue(val)
+
+    property InternalGrabEngineThreadPriority:
+        # Does not seem writable
+        def __get__(self):
+            return( self.camera.InternalGrabEngineThreadPriority.GetValue() )
+
+    property GrabLoopThreadUseTimeout:
+        def __get__(self):
+            return( self.camera.GrabLoopThreadUseTimeout.GetValue() )
+        def __set__(self, val):
+            self.camera.GrabLoopThreadUseTimeout.SetValue(val)
+
+    property GrabLoopThreadTimeout:
+        def __get__(self):
+            return( self.camera.GrabLoopThreadTimeout.GetValue() )
+        def __set__(self, val):
+            self.camera.GrabLoopThreadTimeout.SetValue(val)
+
+    property GrabLoopThreadPriorityOverride:
+        def __get__(self):
+            return( self.camera.GrabLoopThreadPriorityOverride.GetValue() )
+        def __set__(self, val):
+            self.camera.GrabLoopThreadPriorityOverride.SetValue(val)
+
+    property GrabLoopThreadPriority:
+        # Does Not seem writable
+        def __get__(self):
+            return( self.camera.GrabLoopThreadPriority.GetValue() )
+
 
 cdef class Factory:
     def __cinit__(self):
