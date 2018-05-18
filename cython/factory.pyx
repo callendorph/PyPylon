@@ -111,6 +111,16 @@ cdef class _PropertyMap:
 
         return (<string>(node.GetDisplayName())).decode()
 
+    def get_dict(self):
+        ret = {}
+        for key in self.keys():
+            try:
+                val = self[key]
+                ret[key] = val
+            except IOError:
+                logging.info("Key[{}]: Not Readable".format(key))
+        return(ret)
+
     def __getitem__(self, basestring key):
         cdef bytes btes_name = key.encode()
         cdef INode* node = self.map.GetNode(gcstring(btes_name))
