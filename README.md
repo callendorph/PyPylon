@@ -56,13 +56,12 @@ False
 >>> import matplotlib.pyplot as plt
 
 >>> available_cameras = pylon.factory.find_devices()
->>> available_cameras
-[<DeviceInfo Basler acA2040-90um (xxxxxxx)>]
 >>> cam = pylon.factory.create_device(available_cameras[0])
 >>> cam.opened
 False
 >>> cam.open()
 >>> cam.MaxNumBuffer = 5
+>>> cam.properties["PixelFormat"] = "RGB8"
 >>> cam.start_grabbing(
 ...     pylon.GrabStrategy.LatestImageOnly,
 ...     pylon.GrabLoop.ProvidedByUser
