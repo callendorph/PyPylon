@@ -452,6 +452,18 @@ cdef class Camera:
         def __get__(self):
             return _PropertyMap.create(&self.camera.GetNodeMap())
 
+    property transport_properties:
+        def __get__(self):
+            return _PropertyMap.create(&self.camera.GetTLNodeMap())
+
+    property stream_properties:
+        def __get__(self):
+            return _PropertyMap.create(&self.camera.GetStreamGrabberNodeMap())
+
+    property event_properties:
+        def __get__(self):
+            return _PropertyMap.create(&self.camera.GetEventGrabberNodeMap())
+
     def is_usb(self):
         return(self.camera.IsUsb())
 

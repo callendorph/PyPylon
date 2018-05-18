@@ -237,6 +237,10 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         bool IsBcon()
 
         INodeMap& GetNodeMap()
+        INodeMap& GetTLNodeMap()
+        INodeMap& GetStreamGrabberNodeMap()
+        INodeMap& GetEventGrabberNodeMap()
+        INodeMap& GetInstantCameraNodeMap()
 
         # Data Members
         IInteger MaxNumBuffer
