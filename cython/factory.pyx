@@ -408,7 +408,16 @@ cdef class Camera:
                 "PadX={}: X Dimension Padding Unhandled".format(padX)
             )
 
-        chs,bitDepth = _fmtLookup[ img.GetPixelType() ]
+        cdef pixType = img.GetPixelType()
+        try:
+
+            chs,bitDepth = _fmtLookup[ img.GetPixelType() ]
+        except:
+            pixFmt = self.properties["PixelFormat"]
+            logging.error("Unknown Image Format: pixType={} size={}, height={}, width={}, padX={}".format(pixFmt, img.GetImageSize(), img.GetHeight(), img.GetWidth(), img.GetPaddingX() ) )
+
+            raise RuntimeError("Unknown Pixel Type: {}".format(pixType))
+
         logging.debug(
             "Pixel Format: chs={}, pixdepth={}".format(chs, bitDepth)
         )
