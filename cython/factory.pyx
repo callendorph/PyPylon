@@ -269,17 +269,35 @@ cdef class _PropertyMap:
 #  skipped = number of images skipped since last capture - (Latest cap mode)
 ImageMetaData = namedtuple("ImageMetaData", ["ts", "id", "num", "skipped"])
 
-######################
-# Lookup table for different pixel types
-# @note - this table is not complete
-_fmtLookup = {
-    PixelType_Mono8 : (1, 8),
-    PixelType_Mono16 : (1, 16),
-    PixelType_BGR8packed : (3, 8),
-    PixelType_RGB8packed : (3, 8),
-    PixelType_RGB16packed : (3, 16),
-    PixelType_BGRA8packed : (4, 8),
-}
+cdef convert_to_rgb(IImage* src, IImage *dst):
+    """ Convert a IImage object to the destination image format
+    @return indicates whether or not a conversion was required - or not
+    """
+    cdef CImageFormatConverter fmtr
+    cdef dstFmt = dst.GetPixelType()
+    cdef srcFmt = src.GetPixelType()
+    cdef padX = src.GetPaddingX()
+    cdef orient = src.GetOrientation()
+
+    fmtr.Initialize(srcFmt)
+    fmtr.OutputPixelFormat.SetValue(dstFmt)
+
+    if ( fmtr.ImageHasDestinationFormat(srcFmt, padX, orient) ):
+        return(False)
+
+    cdef w = src.GetWidth()
+    cdef h = src.GetHeight()
+
+    fmtr.Convert(
+        dst.GetBuffer(),
+        dst.GetImageSize(),
+        src.GetBuffer(),
+        src.GetImageSize(),
+        srcFmt, w,h, padX, orient
+        )
+
+    fmtr.Uninitialize()
+    return(True)
 
 class GrabStrategy(Enum):
     OneByOne = GrabStrategy_OneByOne
@@ -399,39 +417,49 @@ cdef class Camera:
             logging.error("{}: ret=True, Grab Success, Image is Invalid!".format(funcArgs))
             raise RuntimeError('IImage is not valid.')
 
-        if img.GetImageSize() % img.GetHeight():
-            logging.error("Non-standard Image Size Encountered: size={}, height={}, width={}, padX={}".format(img.GetImageSize(), img.GetHeight(), img.GetWidth(), img.GetPaddingX() ) )
+        cdef w = img.GetWidth()
+        cdef h = img.GetHeight()
+        cdef imgSize = img.GetImageSize()
+        cdef padX = img.GetPaddingX()
 
-        padX = img.GetPaddingX()
+        if imgSize % h:
+            logging.error("Non-standard Image Size Encountered: size={}, height={}, width={}, padX={}".format(imgSize, h, w, padX ) )
+
         if ( padX > 0 ):
             raise RuntimeError(
                 "PadX={}: X Dimension Padding Unhandled".format(padX)
             )
 
-        cdef pixType = img.GetPixelType()
-        try:
+        cdef srcFmt = img.GetPixelType()
+        cdef dstFmt = PixelType_BGR8packed
+        cdef IImage *rgb = <IImage *>(&dst)
+        cdef CPylonImage dst
+        if ( not IsMonoImage(srcFmt) ):
+            dst = Create(dstFmt, w, h)
+            if ( not convert_to_rgb(img, rgb) ):
+                rgb = img
+        else:
+            rgb = img
 
-            chs,bitDepth = _fmtLookup[ img.GetPixelType() ]
-        except:
-            pixFmt = self.properties["PixelFormat"]
-            logging.error("Unknown Image Format: pixType={} size={}, height={}, width={}, padX={}".format(pixFmt, img.GetImageSize(), img.GetHeight(), img.GetWidth(), img.GetPaddingX() ) )
-
-            raise RuntimeError("Unknown Pixel Type: {}".format(pixType))
+        cdef pixType = rgb.GetPixelType()
+        cdef chs = SamplesPerPixel(pixType)
+        cdef bitDepth = BitDepth(pixType)
 
         logging.debug(
             "Pixel Format: chs={}, pixdepth={}".format(chs, bitDepth)
         )
+
         npdtype = "uint{}".format(bitDepth)
         img_data = np.frombuffer(
-            (<char*>img.GetBuffer())[:img.GetImageSize()], dtype=npdtype
+            (<char*>rgb.GetBuffer())[:rgb.GetImageSize()], dtype=npdtype
         )
 
         if ( chs == 1 ):
-            frame = img_data.reshape((img.GetHeight(), -1))
+            frame = img_data.reshape((rgb.GetHeight(), -1))
         else:
-            frame = img_data.reshape((img.GetHeight(), -1, chs))
+            frame = img_data.reshape((rgb.GetHeight(), -1, chs))
 
-        orient = img.GetOrientation()
+        orient = rgb.GetOrientation()
         if ( orient == ImageOrientation_BottomUp ):
             logging.debug("Flipping image vertically")
             frame = np.flipup(frame)
