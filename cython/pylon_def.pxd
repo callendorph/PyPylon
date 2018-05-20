@@ -123,6 +123,10 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
     void PylonInitialize() except +raise_py_error
     void PylonTerminate() except +raise_py_error
 
+    ctypedef enum EImageOrientation:
+        ImageOrientation_TopDown,
+        ImageOrientation_BottomUp
+
     ctypedef enum EPixelType:
     # @ note - this is not a complete listing - just
     #    available types in the emulator for now.
@@ -132,11 +136,42 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         PixelType_RGB8packed,
         PixelType_BGR8packed,
         PixelType_BGRA8packed,
-        PixelType_RGB16packed
+        PixelType_RGB16packed,
+        PixelType_YUV422_YUYV_Packed
 
-    ctypedef enum EImageOrientation:
-        ImageOrientation_TopDown,
-        ImageOrientation_BottomUp
+    bool IsMonoPacked(EPixelType)
+    bool IsBayerPacked(EPixelType)
+    bool IsRGBPacked(EPixelType)
+    bool IsBGRPacked(EPixelType)
+    bool IsPacked(EPixelType)
+    bool IsPackedInLsbFormat(EPixelType)
+    uint32_t PlaneCount(EPixelType)
+    EPixelType GetPlanePixelType(EPixelType)
+    bool IsPlanar(EPixelType)
+    uint32_t BitPerPixel(EPixelType)
+    uint32_t SamplesPerPixel(EPixelType)
+    bool IsYUV( EPixelType)
+    bool IsRGBA(EPixelType)
+    bool IsRGB(EPixelType)
+    bool IsBGR(EPixelType)
+    bool IsBayer(EPixelType)
+    bool IsMono(EPixelType)
+    bool IsMonoImage(EPixelType)
+    bool IsColorImage(EPixelType)
+    bool HasAlpha(EPixelType)
+    uint32_t GetPixelIncrementX(EPixelType)
+    uint32_t GetPixelIncrementY(EPixelType)
+    uint32_t BitDepth( EPixelType )
+
+    cdef cppclass IReusableImage:
+        bool IsSupportedPixelType( EPixelType pixelType)
+        bool IsAdditionalPaddingSupported()
+        void Reset( EPixelType pixelType, uint32_t width, uint32_t height) except +raise_py_error
+
+        void Reset( EPixelType pixelType, uint32_t width, uint32_t height, EImageOrientation orientation) except +raise_py_error
+        void Reset( EPixelType pixelType, uint32_t width, uint32_t height, size_t paddingX) except +raise_py_error
+        void Reset( EPixelType pixelType, uint32_t width, uint32_t height, size_t paddingX, EImageOrientation orientation) except +raise_py_error
+        void Release()
 
     cdef cppclass IImage:
         uint32_t GetWidth()
@@ -149,6 +184,58 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         EPixelType GetPixelType()
         bool GetStride( size_t& strideBytes )
         bool IsUnique()
+
+    cdef cppclass CPylonImage:
+        CPylonImage()
+        bool IsValid()
+        EPixelType GetPixelType()
+        uint32_t GetWidth()
+        uint32_t GetHeight()
+        size_t GetPaddingX()
+        EImageOrientation GetOrientation()
+        void* GetBuffer()
+        size_t GetImageSize()
+        bool IsUnique()
+        bool GetStride( size_t& strideBytes)
+
+
+    cdef cppclass CImageFormatConverter:
+        cppclass IOutputPixelFormatEnum:
+            void SetValue(EPixelType) except +raise_py_error
+            EPixelType GetValue()
+
+        IOutputPixelFormatEnum& OutputPixelFormat
+
+        CImageFormatConverter()
+        void Initialize( EPixelType sourcePixelType) except +raise_py_error
+        bool IsInitialized( EPixelType sourcePixelType)
+        void Uninitialize()
+        bool ImageHasDestinationFormat( const IImage& sourceImage)
+        bool ImageHasDestinationFormat( EPixelType sourcePixelType, size_t sourcePaddingX, EImageOrientation sourceOrientation)
+        size_t GetBufferSizeForConversion( const IImage& sourceImage) except +raise_py_error
+        size_t GetBufferSizeForConversion( EPixelType sourcePixelType, uint32_t sourceWidth, uint32_t sourceHeight) except +raise_py_error
+        void Convert( IReusableImage& destinationImage, const IImage& sourceImage)
+        void Convert( IReusableImage& destinationImage,
+                      const void* pSourceBuffer,
+                      size_t sourceBufferSizeBytes,
+                      EPixelType sourcePixelType,
+                      uint32_t sourceWidth,
+                      uint32_t sourceHeight,
+                      size_t sourcePaddingX,
+                      EImageOrientation sourceOrientation
+                      ) except +raise_py_error
+        void Convert( void* pDestinationBuffer, size_t destinationBufferSizeBytes, const IImage& sourceImage) except +raise_py_error
+        void Convert( void* pDestinationBuffer,
+                      size_t destinationBufferSizeBytes,
+                      const void* pSourceBuffer,
+                      size_t sourceBufferSizeBytes,
+                      EPixelType sourcePixelType,
+                      uint32_t sourceWidth,
+                      uint32_t sourceHeight,
+                      size_t sourcePaddingX,
+                      EImageOrientation sourceOrientation
+                      ) except +raise_py_error
+        INodeMap& GetNodeMap()
 
     ctypedef enum EPayloadType:
         PayloadType_Undefined,
@@ -277,9 +364,18 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         int EnumerateDevices(DeviceInfoList_t&, bool add_to_list=False)
         IPylonDevice* CreateDevice(CDeviceInfo&)
 
-# Hack to define a static member function
 cdef extern from "pylon/PylonIncludes.h"  namespace 'Pylon::CTlFactory':
     CTlFactory& GetInstance()
+
+cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon::CImageFormatConverter':
+    bool IsSupportedInputFormat( EPixelType sourcePixelType)
+    bool IsSupportedOutputFormat( EPixelType destinationPixelType)
+
+cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon::CPylonImage':
+    CPylonImage Create(EPixelType pixelType, uint32_t width, uint32_t height) except +raise_py_error
+    CPylonImage Create(EPixelType pixelType, uint32_t width, uint32_t height, size_t paddingX) except +raise_py_error
+    CPylonImage Create(EPixelType pixelType, uint32_t width, uint32_t height, size_t paddingX, EImageOrientation orientation) except +raise_py_error
+
 
 # The pylon library uses CGrabResultPtr as a means of protecting the
 #   pointer of the GrabResultData object. This object has most of its
