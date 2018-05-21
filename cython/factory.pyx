@@ -22,6 +22,13 @@ cdef gcstring_vector_to_list(gcstring_vector strVec):
         ret.append(s)
     return(ret)
 
+class DeviceAccessibility(Enum):
+    Unknown = Accessibility_Unknown
+    Ok = Accessibility_Ok
+    Opened = Accessibility_Opened
+    OpenedExclusively = Accessibility_OpenedExclusively
+    NotReachable = Accessibility_NotReachable
+
 # Local map for enumerated types that
 #   are built from data that comes from the
 #   camera.
@@ -633,6 +640,32 @@ cdef class Factory:
             inc(it)
 
         return found_devices
+
+    def check_accessible(self, DeviceInfo info):
+        """ Check if the camera device is available to be opened. Note that
+        this isn't perfect, there is a slight race condition if two processes
+        try to access the same camera at the same time. But in general, this
+        should avoid the case where a std::terminate call is made if the
+        device is already open.
+        @return True means that the device can be opened exclusively, other
+          wise you may only be able to support events or read access only
+        @note this method will throw an exception if the device is opened
+          exclusively by another process.
+        """
+        cdef CTlFactory* tl_factory = &GetInstance()
+        cdef EDeviceAccessiblityInfo acc = Accessibility_Unknown
+
+        cdef AccessModeSet mode
+        mode.set(Event)
+
+        canAccess = tl_factory.IsDeviceAccessible(info.dev_info, mode, &acc)
+
+        if ( not canAccess):
+            devAccess = DeviceAccessibility(acc)
+            logging.error("Unable to access Device: {}".format(devAccess.name))
+            raise RuntimeError("Device is Unaccessible: {}".format(devAccess.name))
+
+        return ( acc == Accessibility_Ok )
 
     def create_device(self, DeviceInfo dev_info):
         cdef CTlFactory* tl_factory = &GetInstance()

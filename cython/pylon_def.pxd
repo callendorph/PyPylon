@@ -360,9 +360,32 @@ cdef extern from "pylon/PylonIncludes.h" namespace 'Pylon':
         iterator begin()
         iterator end()
 
+    ctypedef enum EDeviceAccessiblityInfo:
+        Accessibility_Unknown,
+        Accessibility_Ok,
+        Accessibility_Opened,
+        Accessibility_OpenedExclusively,
+        Accessibility_NotReachable
+
+    ctypedef enum EDeviceAccessMode:
+        Control,
+        Stream,
+        Event,
+        Exclusive
+
+    cdef cppclass AccessModeSet:
+        AccessModeSet()
+        AccessModeSet& set(size_t pos)
+        AccessModeSet& reset()
+        bool any()
+        bool none()
+        bool test(size_t)
+        unsigned long to_ulong()
+
     cdef cppclass CTlFactory:
         int EnumerateDevices(DeviceInfoList_t&, bool add_to_list=False)
-        IPylonDevice* CreateDevice(CDeviceInfo&)
+        IPylonDevice* CreateDevice(CDeviceInfo&) except +raise_py_error
+        bool IsDeviceAccessible(CDeviceInfo&, AccessModeSet, EDeviceAccessiblityInfo*) except +raise_py_error
 
 cdef extern from "pylon/PylonIncludes.h"  namespace 'Pylon::CTlFactory':
     CTlFactory& GetInstance()
