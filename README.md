@@ -9,18 +9,17 @@ While the basic code seems to work, I'd like to point out, that it still in earl
 ## Current TODO list and development targets
  - [x] Test with color cameras
  - [x] Handle different image packing other than Mono8
- - [ ] Make cython code more modular
- - [ ] Support commands
- - [ ] Try triggered images and such
+ - [x] Try triggered images and such
  - [ ] Add some callbacks on events
- - [x] Test code under Windows
+ - [ ] Test code under Windows/OSX
 
 CJA: I've taken the existing code and updated it for 5.0.12:
- - Added handling for limited set multichannel images (ie, RGB8, BGR8, BGRA8)
+ - Added handling for limited set multichannel images (ie, RGB8, BGR8, BGRA8, YCbCr, etc.)
  - Added better exception handling - ie, Pylon::GenericException gets mapped to a RuntimeError now.
  - Added better configuration and control of the grabbing mechanism.
  - Added ability to get/set enumerated types. I've also added some code to extract the symbolic values of enumerated types into python enums.
  - Added image frame meta-data like timestamp, blockid, skipped frames, etc.
+ - Added check for accessibility on the device. If you try to open a device that is already open, it throws a nasty terminate exception that can't be caught in cython.
  - I'm primarily testing in py2.7 - so there may be dragons in py3.x. Submit a PR if you think there is a bug.
 
 ## Simple usage example
@@ -53,8 +52,9 @@ False
 ## Grabbing with your own loop
 ```python
 >>> import pypylon as pylon
->>> import matplotlib.pyplot as plt
-
+>>> import cv2
+>>> pylon.pylon_version.version
+'5.0.12.build_11829'
 >>> available_cameras = pylon.factory.find_devices()
 >>> cam = pylon.factory.create_device(available_cameras[0])
 >>> cam.opened
