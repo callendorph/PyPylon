@@ -31,23 +31,15 @@ class DeviceAccessibility(Enum):
     OpenedExclusively = Accessibility_OpenedExclusively
     NotReachable = Accessibility_NotReachable
 
-# Local map for enumerated types that
-#   are built from data that comes from the
-#   camera.
-enumdefs = {}
-
 cdef build_enum(basestring key, IEnumeration* enum_val):
     """ Given the key value for a parameter on a camera and
     a known enumerated parameter object, extract out the enumerated
-    types available values.
+    types available values as a list of strings
     """
     cdef gcstring_vector symbols
     enum_val.GetSymbolics(symbols)
     symbStrs = gcstring_vector_to_list(symbols)
-    kv = zip(symbStrs, symbStrs)
-    enumType = Enum(key + "Enum", kv)
-    enumdefs[key] = enumType
-    return(enumType)
+    return(symbStrs)
 
 
 cdef class DeviceInfo:
@@ -94,11 +86,13 @@ cdef class DeviceInfo:
 cdef class _PropertyMap:
     cdef:
         INodeMap* map
+        dict enumdefs
 
     @staticmethod
     cdef create(INodeMap* map):
         obj = _PropertyMap()
         obj.map = map
+        obj.enumdefs = {}
         return obj
 
     def get_description(self, basestring key):
@@ -240,14 +234,14 @@ cdef class _PropertyMap:
                 enumType = self._extract_enum(k)
             except Exception as exc:
                 pass
-        return(enumdefs)
+        return(self.enumdefs)
 
     def get_enum_by_key(self, key):
         return(self._extract_enum(key))
 
     def _extract_enum(self, key):
         try:
-            enumType = enumdefs[key]
+            enumType = self.enumdefs[key]
             return(enumType)
         except KeyError:
             pass
@@ -266,6 +260,7 @@ cdef class _PropertyMap:
             raise ValueError("Not an Enum Type")
 
         enumType = build_enum(key, enum_val)
+        self.enumdefs[key] = enumType
 
         return(enumType)
 
